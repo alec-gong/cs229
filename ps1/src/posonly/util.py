@@ -23,7 +23,7 @@ def load_dataset(csv_path, label_col='y', add_intercept=False):
 
     Args:
          csv_path: Path to CSV file containing dataset.
-         label_col: Name of column to use as labels (should be 'y' or 'l').
+         label_col: Name of column to use as labels (should be 'y' or 't').
          add_intercept: Add an intercept entry to x-values.
 
     Returns:

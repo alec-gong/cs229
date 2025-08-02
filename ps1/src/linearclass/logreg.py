@@ -13,9 +13,19 @@ def main(train_path, valid_path, save_path):
     x_train, y_train = util.load_dataset(train_path, add_intercept=True)
 
     # *** START CODE HERE ***
+
     # Train a logistic regression classifier
-    # Plot decision boundary on top of validation set set
+    lg = LogisticRegression()
+    lg.fit(x_train, y_train)
+
+    # Plot decision boundary on top of validation set
+    x_val, y_val = util.load_dataset(valid_path, add_intercept=True)
+    plot_path = save_path.replace('.txt', '.png')
+    util.plot(x_val, y_val, lg.theta, plot_path)
+
     # Use np.savetxt to save predictions on eval set to save_path
+    y_predict = lg.predict(x_val)
+    np.savetxt(save_path, y_predict)
     # *** END CODE HERE ***
 
 
@@ -51,6 +61,23 @@ class LogisticRegression:
             y: Training example labels. Shape (n_examples,).
         """
         # *** START CODE HERE ***
+        n, dim = x.shape
+        if not self.theta:
+            self.theta = np.zeros(dim)
+
+        for i in range(self.max_iter):
+            hes = self._hessian(x)
+            der = self._grad(x, y)
+
+            delta = self.step_size * np.linalg.inv(hes).dot(der)
+            self.theta -= delta
+
+            loss = self._loss(x, y)
+            if self.verbose:
+                print(f"Training loss of iteration {i}: {loss:.7f}\n")
+
+            if np.sum(np.abs(delta)) < self.eps:
+                break
         # *** END CODE HERE ***
 
     def predict(self, x):
@@ -63,7 +90,30 @@ class LogisticRegression:
             Outputs of shape (n_examples,).
         """
         # *** START CODE HERE ***
+        return self._hypo(x)
         # *** END CODE HERE ***
+
+    def _grad(self, x, y):
+        n, _ = x.shape
+        return - (1/n) * x.T.dot(y-self._hypo(x))
+    
+    def _hessian(self, x):
+        n, _ = x.shape
+        h = self._hypo(x)
+        diag = np.diag(h * (1.0 - h))
+        return 1 / n * x.T.dot(diag).dot(x)
+
+    def _loss(self, x, y):
+        h = self._hypo(x)
+        return -np.mean(y * np.log(h + self.eps) + (1 - y) * np.log(1 - h + self.eps))
+
+    def _hypo(self, x):
+        return self._sigmoid(x.dot(self.theta))
+
+    @staticmethod
+    def _sigmoid(x):
+        return 1 / (1 + np.exp(-x))
+
 
 if __name__ == '__main__':
     main(train_path='ds1_train.csv',
