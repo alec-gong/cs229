@@ -35,22 +35,39 @@ def main(train_path, valid_path, test_path, save_path):
     plot_path_naive = plot_path.replace(WILDCARD, 'naive')
     plot_path_adjusted = plot_path.replace(WILDCARD, 'adjusted')
 
+    x_test, t_test = util.load_dataset(test_path, label_col='t', add_intercept=True)
+
     # *** START CODE HERE ***
     # Part (a): Train and test on true labels
     # Make sure to save predicted probabilities to output_path_true using np.savetxt()
     x_train, t_train = util.load_dataset(train_path, label_col='t', add_intercept=True)
-    x_val, t_val = util.load_dataset(valid_path, label_col='t', add_intercept=True)
 
     lg = LogisticRegression()
     lg.fit(x_train, t_train)
-    y_predict = lg.predict(x_val)
-    np.savetxt(save_path, y_predict)
-    util.plot(x_val, t_val, lg.theta, plot_path_true)
+    y_predict = lg.predict(x_test)
+    np.savetxt(output_path_true, y_predict)
+    util.plot(x_test, t_test, lg.theta, plot_path_true)
 
     # Part (b): Train on y-labels and test on true labels
     # Make sure to save predicted probabilities to output_path_naive using np.savetxt()
+    x_train, y_train = util.load_dataset(train_path, label_col='y', add_intercept=True)
+
+    lg = LogisticRegression()
+    lg.fit(x_train, y_train)
+    y_predict = lg.predict(x_test)
+    np.savetxt(output_path_naive, y_predict)
+    util.plot(x_test, t_test, lg.theta, plot_path_naive)
+
     # Part (f): Apply correction factor using validation set and test on true labels
     # Plot and use np.savetxt to save outputs to output_path_adjusted
+    x_val, y_val = util.load_dataset(valid_path, label_col='y')
+    x_val = x_val[y_val==1, :]
+    x_val = util.add_intercept(x_val)
+    y_pred = lg.predict(x_val)
+    alpha = np.mean(y_pred)
+    print("alpha is ", alpha)
+    np.savetxt(output_path_adjusted,  y_predict/ alpha)
+    util.plot(x_test, t_test, lg.theta, plot_path_adjusted, correction=alpha)
     # *** END CODER HERE
 
 if __name__ == '__main__':
